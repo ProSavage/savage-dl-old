@@ -4,6 +4,7 @@ const MongoClient = require('mongodb').MongoClient;
 const bodyParser = require('body-parser');
 const db = require('./app/config/db');
 const Discord = require('discord.js');
+const cors = require('cors');
 
 const app = express();
 app.use(bodyParser.urlencoded({extended: true}));
@@ -22,11 +23,7 @@ MongoClient.connect(db.url, (err, database) => {
         console.log(`Logged in as ${client.user.tag}!`);
     });
     app.use(function (req, res, next) {
-        res.setHeader("Access-Control-Allow-Origin", "*");
-        res.setHeader("Access-Control-Allow-Credentials", "true");
-        res.setHeader("Access-Control-Max-Age", "1800");
-        res.setHeader("Access-Control-Allow-Headers", "content-type");
-        res.setHeader("Access-Control-Allow-Methods","PUT, POST, GET, DELETE, PATCH, OPTIONS");
+        app.use(cors());
         next();
     });
 
