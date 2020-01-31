@@ -4,7 +4,7 @@ const MongoClient = require('mongodb').MongoClient;
 const bodyParser = require('body-parser');
 const db = require('./app/config/db');
 const Discord = require('discord.js');
-const cors = require('cors');
+
 
 const app = express();
 app.use(bodyParser.urlencoded({extended: true}));
@@ -22,6 +22,7 @@ MongoClient.connect(db.url, (err, database) => {
     client.on('ready', () => {
         console.log(`Logged in as ${client.user.tag}!`);
     });
+    const cors = require('cors');
     app.use(function (req, res, next) {
         app.use(cors());
         next();
