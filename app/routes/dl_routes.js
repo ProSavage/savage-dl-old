@@ -1,30 +1,121 @@
 var ObjectID = require('mongodb').ObjectID;
+var Binary = require('mongodb').Binary;
+const baseURL = "https://ci.savagelabs.net";
+const axios = require('axios').default;
+const Path = require('path');
+const fs = require('fs');
+const DiscordOAuth2 = require("discord-oauth2");
+const oauth = new DiscordOAuth2();
+const fetch = require('node-fetch');
+const FormData = require('form-data');
 
 
-module.exports = function (app, db) {
-    app.get('/notes/:id', (req, res) => {
-        console.log("bruh");
-        const id = req.params.id;
-        const details = { '_id': new ObjectID(id) };
-        db.collection('users').findOne(details, (err, item) => {
-            if (err) {
-                res.send({ 'error': 'Something went wrong.'})
-            } else {
-                res.send(item)
-            }
-        });
+module.exports = function (app, db, client) {
+
+
+    app.get('/auth/:code',(req, res) => {
+        const code = req.params.code;
+        console.log(`Code: ${code}`);
+        const data = new FormData();
+        data.append('client_id', process.env.CLIENT_ID);
+        data.append('client_secret', process.env.CLIENT_SECRET);
+        data.append('grant_type', 'authorization_code');
+        data.append('redirect_uri', 'http://localhost:3000');
+        data.append('scope', 'identify');
+        data.append('code', code);
+
+        fetch('https://discordapp.com/api/oauth2/token', {
+            method: 'POST',
+            body: data,
+        })
+            .then(res => res.json())
+            .then(token => res.send(token.access_token))
     });
-    app.post('/create-user', (req, res) => {
-        // We create the user here.
-        const user = {id: req.body.id};
-        db.collection('users').insert(user, (err, results) => {
-            if (err) {
-                res.send({ 'error': 'Something went wrong.'})
-            } else {
-                res.send(results.ops[0])
+
+    app.get('/builds/:name/:token', (req, res) => {
+        const name = req.params.name;
+        fetch('https://discordapp.com/api/users/@me', {
+            headers: {
+                authorization: `Bearer ${req.params.token}`
             }
         })
+        .then(res => res.json())
+        .then(user => {
+            if (user.id) {
+                return client.guilds.get("410507206648135681").members.get(user.id).roles.map(role => role.name.toLocaleLowerCase())
+            } else {
+                res.send("Invalid user.")
+            }
+        })
+        .then(roles => roles.includes(name.toLowerCase()))
+        .then(result => {
+            if (result) {
+                console.log("Approved for " + name);
+                let axiosInstance = axios.create({
+                    baseURL: "https://ci.savagelabs.net/app/rest/",
+                    headers: {
+                        'Authorization':
+                            'Bearer ' + process.env.TEAMCITY
+                    }
+                });
+
+                var path = null;
+                var link = null;
+                var buildID = null;
+                const buildsCollection = db.collection('builds');
+
+                axiosInstance.get("builds/project:" + name + "/artifacts/")
+                    .then(function(response) {
+                        // console.log(response.data);
+                        link = baseURL + response.data.file[0].href.replace("metadata", "content");
+                        buildID = response.data.file[0].href.split("/")[4].replace("id:", "");
+                        path = Path.resolve(__dirname, "files", name + "-" + buildID + ".jar");
+                        // If mongodb has file return;
+                        let fileInDb = false;
+                        buildsCollection.findOne({buildID: buildID}, (err, results) => {
+                            if (results) {
+                                let fileToDl = __dirname + "/staging/" + name + "-" + buildID + ".jar";
+                                fs.writeFile(fileToDl, results.file_data.buffer, function (err) {
+                                    if (!err) {
+                                        console.log("successfully saved.");
+                                        fileInDb = true;
+                                        res.download(fileToDl);
+                                    }
+                                });
+                            }
+                        });
+                        if (fileInDb) return;
+                        return axiosInstance.request({url: link, method: 'GET', responseType: 'stream'})
+                    })
+                    .catch(function (error) {
+                        // handle error
+                        console.log(error);
+                    })
+                    .then(function (response) {
+                        // console.log(response);
+                        response.data.pipe(fs.createWriteStream(path));
+                        const data = Binary(fs.readFileSync(path));
+                        var insertData = {buildID};
+                        insertData.file_data = data;
+                        buildsCollection.insert(insertData, function (error, result) {
+                        });
+                        res.download(path, function(err){
+                            if(err) {
+                                // Check if headers have been sent
+                                if(res.headersSent) {
+                                    // You may want to log something here or do something else
+                                } else {
+                                    return res.sendStatus(404); // 404, maybe 500 depending on err
+                                }
+                            }
+                            // Don't need res.end() here since already sent
+                        });
+                        // res.send("success")
+                    })
+                    .catch(function (error) {
+                        console.log(error)
+                    })
+            } else console.log("could not because no roles lol")
+        });
     });
-
-
 };
