@@ -37,14 +37,14 @@ module.exports = function (app, db, client) {
                     const sessionId = uuid();
                     sessions[sessionId] = token.access_token;
                     setTimeout(function () {
-                        console.log("Expired: " + sessionId);
+                        console.log("Session Expired: " + sessionId);
                         sessions.delete(sessionId);
                     }, token.expires_in);
                     console.log(token);
                     res.send(sessionId);
                 } else {
-                    console.log("Invalid Token Request Received.");
-                    res.send("INVALID_TOKEN")
+                    console.log("Auth: Invalid Token Request Received.");
+                    res.send("INVALID_AUTH_CODE")
                 }
             })
     });
