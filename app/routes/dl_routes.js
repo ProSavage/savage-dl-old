@@ -33,19 +33,31 @@ module.exports = function (app, db, client) {
         })
             .then(res => res.json())
             .then(token => {
-                const sessionId = uuid();
-                sessions[sessionId] = token.access_token;
-                setTimeout(function () {
-                    console.log("Expired: " + sessionId);
-                    sessions.delete(sessionId);
-                }, token.expires_in);
-                console.log(token);
-                res.send(sessionId);
+                if (token.access_token) {
+                    const sessionId = uuid();
+                    sessions[sessionId] = token.access_token;
+                    setTimeout(function () {
+                        console.log("Expired: " + sessionId);
+                        sessions.delete(sessionId);
+                    }, token.expires_in);
+                    console.log(token);
+                    res.send(sessionId);
+                } else {
+                    console.log("Invalid Token Request Received.");
+                    res.send("INVALID_TOKEN")
+                }
             })
     });
 
-    app.get('/builds/:name/:token', (req, res) => {
+    app.get('/builds/:name/:session', (req, res) => {
         const name = req.params.name;
+        const session = req.params.session;
+
+        if (!sessions.has(session)) {
+            res.send({error: "Invalid Session."});
+            return;
+        }
+
         fetch('https://discordapp.com/api/users/@me', {
             headers: {
                 authorization: `Bearer ${req.params.token}`
