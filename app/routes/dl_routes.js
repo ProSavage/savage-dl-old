@@ -61,7 +61,7 @@ module.exports = function (app, db, client) {
 
         fetch('https://discordapp.com/api/users/@me', {
             headers: {
-                authorization: `Bearer ${req.params.token}`
+                authorization: `Bearer ${sessions[session]}`
             }
         })
             .then(res => res.json())
