@@ -140,7 +140,7 @@ module.exports = function (app, db, client) {
                         .catch(function (error) {
                             console.log(error)
                         })
-                } else console.log("could not because no roles lol")
+                } else res.send({error: "You do not have permission to download this resource, as you do not have the role."})
             });
     });
 };
