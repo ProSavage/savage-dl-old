@@ -16,7 +16,7 @@ module.exports = function (app, db, client) {
     let sessions = new Map();
 
 
-    app.get('/auth/:code',(req, res) => {
+    app.get('/auth/:code', (req, res) => {
         const code = req.params.code;
         console.log(`Code: ${code}`);
         const data = new FormData();
@@ -34,8 +34,13 @@ module.exports = function (app, db, client) {
             .then(res => res.json())
             .then(token => {
                 const sessionId = uuid();
+                sessions[sessionId] = token.access_token;
+                setTimeout(function () {
+                    console.log("Expired: " + sessionId);
+                    sessions.delete(sessionId);
+                }, token.expires_in);
                 console.log(token);
-                res.send(sessionId)
+                res.send(sessionId);
             })
     });
 
@@ -46,83 +51,83 @@ module.exports = function (app, db, client) {
                 authorization: `Bearer ${req.params.token}`
             }
         })
-        .then(res => res.json())
-        .then(user => {
-            if (user.id) {
-                return client.guilds.get("410507206648135681").members.get(user.id).roles.map(role => role.name.toLocaleLowerCase())
-            } else {
-                res.send("Invalid user.")
-            }
-        })
-        .then(roles => roles.includes(name.toLowerCase()))
-        .then(result => {
-            if (result) {
-                console.log("Approved for " + name);
-                let axiosInstance = axios.create({
-                    baseURL: "https://ci.savagelabs.net/app/rest/",
-                    headers: {
-                        'Authorization':
-                            'Bearer ' + process.env.TEAMCITY
-                    }
-                });
+            .then(res => res.json())
+            .then(user => {
+                if (user.id) {
+                    return client.guilds.get("410507206648135681").members.get(user.id).roles.map(role => role.name.toLocaleLowerCase())
+                } else {
+                    res.send("Invalid user.")
+                }
+            })
+            .then(roles => roles.includes(name.toLowerCase()))
+            .then(result => {
+                if (result) {
+                    console.log("Approved for " + name);
+                    let axiosInstance = axios.create({
+                        baseURL: "https://ci.savagelabs.net/app/rest/",
+                        headers: {
+                            'Authorization':
+                                'Bearer ' + process.env.TEAMCITY
+                        }
+                    });
 
-                var path = null;
-                var link = null;
-                var buildID = null;
-                const buildsCollection = db.collection('builds');
+                    var path = null;
+                    var link = null;
+                    var buildID = null;
+                    const buildsCollection = db.collection('builds');
 
-                axiosInstance.get("builds/project:" + name + "/artifacts/")
-                    .then(function(response) {
-                        // console.log(response.data);
-                        link = baseURL + response.data.file[0].href.replace("metadata", "content");
-                        buildID = response.data.file[0].href.split("/")[4].replace("id:", "");
-                        path = Path.resolve(__dirname, "files", name + "-" + buildID + ".jar");
-                        // If mongodb has file return;
-                        let fileInDb = false;
-                        buildsCollection.findOne({buildID: buildID}, (err, results) => {
-                            if (results) {
-                                let fileToDl = __dirname + "/staging/" + name + "-" + buildID + ".jar";
-                                fs.writeFile(fileToDl, results.file_data.buffer, function (err) {
-                                    if (!err) {
-                                        console.log("successfully saved.");
-                                        fileInDb = true;
-                                        res.download(fileToDl);
-                                    }
-                                });
-                            }
-                        });
-                        if (fileInDb) return;
-                        return axiosInstance.request({url: link, method: 'GET', responseType: 'stream'})
-                    })
-                    .catch(function (error) {
-                        // handle error
-                        console.log(error);
-                    })
-                    .then(function (response) {
-                        // console.log(response);
-                        response.data.pipe(fs.createWriteStream(path));
-                        const data = Binary(fs.readFileSync(path));
-                        var insertData = {buildID};
-                        insertData.file_data = data;
-                        buildsCollection.insert(insertData, function (error, result) {
-                        });
-                        res.download(path, function(err){
-                            if(err) {
-                                // Check if headers have been sent
-                                if(res.headersSent) {
-                                    // You may want to log something here or do something else
-                                } else {
-                                    return res.sendStatus(404); // 404, maybe 500 depending on err
+                    axiosInstance.get("builds/project:" + name + "/artifacts/")
+                        .then(function (response) {
+                            // console.log(response.data);
+                            link = baseURL + response.data.file[0].href.replace("metadata", "content");
+                            buildID = response.data.file[0].href.split("/")[4].replace("id:", "");
+                            path = Path.resolve(__dirname, "files", name + "-" + buildID + ".jar");
+                            // If mongodb has file return;
+                            let fileInDb = false;
+                            buildsCollection.findOne({buildID: buildID}, (err, results) => {
+                                if (results) {
+                                    let fileToDl = __dirname + "/staging/" + name + "-" + buildID + ".jar";
+                                    fs.writeFile(fileToDl, results.file_data.buffer, function (err) {
+                                        if (!err) {
+                                            console.log("successfully saved.");
+                                            fileInDb = true;
+                                            res.download(fileToDl);
+                                        }
+                                    });
                                 }
-                            }
-                            // Don't need res.end() here since already sent
-                        });
-                        // res.send("success")
-                    })
-                    .catch(function (error) {
-                        console.log(error)
-                    })
-            } else console.log("could not because no roles lol")
-        });
+                            });
+                            if (fileInDb) return;
+                            return axiosInstance.request({url: link, method: 'GET', responseType: 'stream'})
+                        })
+                        .catch(function (error) {
+                            // handle error
+                            console.log(error);
+                        })
+                        .then(function (response) {
+                            // console.log(response);
+                            response.data.pipe(fs.createWriteStream(path));
+                            const data = Binary(fs.readFileSync(path));
+                            var insertData = {buildID};
+                            insertData.file_data = data;
+                            buildsCollection.insert(insertData, function (error, result) {
+                            });
+                            res.download(path, function (err) {
+                                if (err) {
+                                    // Check if headers have been sent
+                                    if (res.headersSent) {
+                                        // You may want to log something here or do something else
+                                    } else {
+                                        return res.sendStatus(404); // 404, maybe 500 depending on err
+                                    }
+                                }
+                                // Don't need res.end() here since already sent
+                            });
+                            // res.send("success")
+                        })
+                        .catch(function (error) {
+                            console.log(error)
+                        })
+                } else console.log("could not because no roles lol")
+            });
     });
 };
