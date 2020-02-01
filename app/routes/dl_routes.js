@@ -13,7 +13,7 @@ const uuid = require('uuid/v1');
 
 module.exports = function (app, db, client) {
 
-    let sessions = Map();
+    let sessions = new Map();
 
 
     app.get('/auth/:code',(req, res) => {
