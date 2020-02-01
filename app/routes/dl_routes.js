@@ -55,7 +55,7 @@ module.exports = function (app, db, client) {
 
         if (!sessions.has(session)) {
             console.log(sessions);
-            res.send({error: "Invalid Session."});
+            res.send({error: "Invalid Session: " + session});
             return;
         }
 
