@@ -35,7 +35,7 @@ module.exports = function (app, db, client) {
             .then(token => {
                 if (token.access_token) {
                     const sessionId = uuid();
-                    sessions[sessionId] = token.access_token;
+                    sessions[sessionId.toString()] = token.access_token;
                     setTimeout(function () {
                         console.log("Session Expired: " + sessionId);
                         sessions.delete(sessionId);
@@ -53,7 +53,7 @@ module.exports = function (app, db, client) {
         const name = req.params.name;
         const session = req.params.session;
 
-        if (!sessions.has(session)) {
+        if (!sessions.has(session.toString())) {
             console.log(sessions);
             res.send({error: "Invalid Session: " + session});
             return;
