@@ -8,9 +8,12 @@ const DiscordOAuth2 = require("discord-oauth2");
 const oauth = new DiscordOAuth2();
 const fetch = require('node-fetch');
 const FormData = require('form-data');
+const uuid = require('uuid/v1');
 
 
 module.exports = function (app, db, client) {
+
+    let sessions = Map();
 
 
     app.get('/auth/:code',(req, res) => {
@@ -29,7 +32,11 @@ module.exports = function (app, db, client) {
             body: data,
         })
             .then(res => res.json())
-            .then(token => res.send(token.access_token))
+            .then(token => {
+                const sessionId = uuid();
+                console.log(token);
+                res.send(sessionId)
+            })
     });
 
     app.get('/builds/:name/:token', (req, res) => {
