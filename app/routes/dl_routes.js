@@ -54,6 +54,7 @@ module.exports = function (app, db, client) {
         const session = req.params.session;
 
         if (!sessions.has(session)) {
+            console.log(sessions);
             res.send({error: "Invalid Session."});
             return;
         }
