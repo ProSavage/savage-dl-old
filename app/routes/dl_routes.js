@@ -16,7 +16,7 @@ module.exports = function (app, db, client) {
     let sessions = new Map();
 
 
-    app.get('/auth/:code', (req, res) => {
+    app.get('/auth/setup/:code', (req, res) => {
         const code = req.params.code;
         console.log(`Code: ${code}`);
         const data = new FormData();
