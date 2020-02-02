@@ -49,6 +49,20 @@ module.exports = function (app, db, client) {
             })
     });
 
+    app.get(`auth/name/:session`, (req, res) => {
+        console.log("Getting user information.");
+        const session = req.params.session;
+        const token = sessions[session];
+        if (!token) {
+            console.log("Invalid Token");
+            res.send({error: "Invalid Session ID."});
+            return;
+        }
+        console.log("Token is: " + token);
+        res.send("Valid Session.")
+    });
+
+
     app.get('/builds/:name/:session', (req, res) => {
         const name = req.params.name;
         const session = req.params.session;
