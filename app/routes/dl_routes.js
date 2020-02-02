@@ -65,8 +65,7 @@ module.exports = function (app, db, client) {
             }
         })
             .then(res => res.json())
-            .then(console.log);
-        res.send({message: "Valid Session."})
+            .then(response => res.send({message: "Success", tag: response.username + "#" + response.discriminator}));
     });
 
 
