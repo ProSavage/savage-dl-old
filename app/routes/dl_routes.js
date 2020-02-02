@@ -41,7 +41,7 @@ module.exports = function (app, db, client) {
                         sessions.delete(sessionId);
                     }, token.expires_in);
                     console.log(token);
-                    res.send(sessionId);
+                    res.send({code: sessionId});
                 } else {
                     console.log("Auth: Invalid Token Request Received.");
                     res.send({code: "INVALID_AUTH_CODE"})
