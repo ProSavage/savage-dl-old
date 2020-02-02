@@ -59,6 +59,13 @@ module.exports = function (app, db, client) {
             return;
         }
         console.log("Token is: " + token);
+        fetch('https://discordapp.com/api/users/@me', {
+            headers: {
+                authorization: `Bearer ${sessions[session]}`
+            }
+        })
+            .then(res => res.json())
+            .then(console.log);
         res.send({message: "Valid Session."})
     });
 
