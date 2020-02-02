@@ -33,6 +33,7 @@ module.exports = function (app, db, client) {
         })
             .then(res => res.json())
             .then(token => {
+                console.log(token);
                 if (token.access_token) {
                     const sessionId = uuid();
                     sessions[sessionId.toString()] = token.access_token;
@@ -44,7 +45,7 @@ module.exports = function (app, db, client) {
                     res.send(sessionId);
                 } else {
                     console.log("Auth: Invalid Token Request Received.");
-                    res.send("INVALID_AUTH_CODE")
+                    res.send({code: "INVALID_AUTH_CODE"})
                 }
             })
     });
