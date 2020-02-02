@@ -49,9 +49,8 @@ module.exports = function (app, db, client) {
             })
     });
 
-    app.get(`auth/name/:code`, (req, res) => {
+    app.get(`/auth/name/:code`, (req, res) => {
         console.log("Getting user information.");
-        res.send({reeeee: "re"});
         const session = req.params.code;
         const token = sessions[session];
         if (!token) {
