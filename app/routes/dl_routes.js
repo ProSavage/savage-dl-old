@@ -33,7 +33,6 @@ module.exports = function (app, db, client) {
         })
             .then(res => res.json())
             .then(token => {
-                console.log(token);
                 if (token.access_token) {
                     const sessionId = uuid();
                     sessions[sessionId.toString()] = token.access_token;
@@ -52,6 +51,7 @@ module.exports = function (app, db, client) {
 
     app.get(`auth/name/:code`, (req, res) => {
         console.log("Getting user information.");
+        res.send({reeeee: "re"});
         const session = req.params.code;
         const token = sessions[session];
         if (!token) {
