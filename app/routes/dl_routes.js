@@ -55,8 +55,9 @@ module.exports = function (app, db, client) {
         const token = sessions[session];
         if (!token) {
             console.log("Invalid Token");
-            res.send({message: "Invalid Session ID."});
             console.log("Current Sessions: " + sessions);
+            res.send({message: "Invalid Session ID."});
+
             return;
         }
         console.log("Token is: " + token);
