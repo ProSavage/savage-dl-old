@@ -53,7 +53,7 @@ module.exports = function (app, db, client) {
         console.log("Getting user information.");
         const session = req.params.code;
         console.log(req.params.code);
-        console.log(session);
+        console.log(JSON.stringify(session));
         const token = sessions[session];
         if (!token) {
             console.log("Invalid Token");
