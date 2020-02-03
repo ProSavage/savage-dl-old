@@ -38,7 +38,7 @@ module.exports = function (app, db, client) {
                     sessions[sessionId.toString()] = token.access_token;
                     setTimeout(function () {
                         console.log("Session Expired: " + sessionId);
-                        sessions.delete(sessionId);
+                        delete sessions[sessionId]
                     }, token.expires_in);
                     console.log(token);
                     res.send({code: sessionId});
