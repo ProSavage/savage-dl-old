@@ -13,7 +13,7 @@ const uuid = require('uuid/v1');
 
 module.exports = function (app, db, client) {
 
-    let sessions = new Map();
+    let sessions = {};
 
 
     app.get('/auth/setup/:code', (req, res) => {
@@ -53,7 +53,7 @@ module.exports = function (app, db, client) {
         console.log("Getting user information.");
         const session = req.params.code;
         console.log("Trying session", session);
-        const token = sessions.get(session);
+        const token = sessions[session];
         if (!token) {
             console.log("Invalid Token");
             res.send({message: "Invalid Session ID."});
