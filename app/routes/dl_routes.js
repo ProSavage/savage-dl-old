@@ -49,13 +49,13 @@ module.exports = function (app, db, client) {
             })
     });
 
-    app.get(`/auth/name/:code`, (req, res) => {        console.log("Getting user information.");
+    app.get(`/auth/name/:code`, (req, res) => {
+        console.log("Getting user information.");
         const session = req.params.code;
         console.log("Trying session", session);
-        const token = sessions[session];
+        const token = sessions.get(session);
         if (!token) {
             console.log("Invalid Token");
-            Object.keys(sessions).forEach(console.log);
             res.send({message: "Invalid Session ID."});
 
             return;
