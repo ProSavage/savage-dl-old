@@ -52,7 +52,7 @@ module.exports = function (app, db, client) {
     app.get(`/auth/name/:code`, (req, res) => {
         console.log("Getting user information.");
         const session = req.params.code;
-        console.log("Trying session", session);
+        console.log("Trying session" + JSON.stringify(session));
         const token = sessions[session];
         if (!token) {
             console.log("Invalid Token");
