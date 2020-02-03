@@ -76,7 +76,7 @@ module.exports = function (app, db, client) {
         const session = req.params.session;
 
         if (sessions.has(session.toString())) {
-            console.log(sessions);
+            console.log(sessions.forEach((key, value) => console.log(key, value)));
             res.send({error: "Invalid Session: " + session});
             return;
         }
