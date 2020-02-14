@@ -72,6 +72,78 @@ module.exports = function (app, db, client) {
     });
 
 
+    app.get('/free/:name', (req, res) => {
+        const name = req.params.name;
+        if (name !== 'skyblockx' || name !== 'factionsx') {
+            res.send({message: "nice try retard."});
+            return
+        }
+        let axiosInstance = axios.create({
+            baseURL: "https://ci.savagelabs.net/app/rest/",
+            headers: {
+                'Authorization':
+                    'Bearer ' + process.env.TEAMCITY
+            }
+        });
+
+        var path = null;
+        var link = null;
+        var buildID = null;
+        const buildsCollection = db.collection('builds');
+
+        axiosInstance.get("builds/project:" + name + "/artifacts/")
+            .then(function (response) {
+                // console.log(response.data);
+                link = baseURL + response.data.file[0].href.replace("metadata", "content");
+                buildID = response.data.file[0].href.split("/")[4].replace("id:", "");
+                path = Path.resolve(__dirname, "files", name + "-" + buildID + ".jar");
+                // If mongodb has file return;
+                let fileInDb = false;
+                buildsCollection.findOne({buildID: buildID}, (err, results) => {
+                    if (results) {
+                        let fileToDl = __dirname + "/staging/" + name + "-" + buildID + ".jar";
+                        fs.writeFile(fileToDl, results.file_data.buffer, function (err) {
+                            if (!err) {
+                                console.log("successfully saved.");
+                                fileInDb = true;
+                                res.download(fileToDl);
+                            }
+                        });
+                    }
+                });
+                if (fileInDb) return;
+                return axiosInstance.request({url: link, method: 'GET', responseType: 'stream'})
+            })
+            .catch(function (error) {
+                // handle error
+                console.log(error);
+            })
+            .then(function (response) {
+                // console.log(response);
+                response.data.pipe(fs.createWriteStream(path));
+                const data = Binary(fs.readFileSync(path));
+                var insertData = {buildID};
+                insertData.file_data = data;
+                buildsCollection.insert(insertData, function (error, result) {
+                });
+                res.download(path, function (err) {
+                    if (err) {
+                        // Check if headers have been sent
+                        if (res.headersSent) {
+                            // You may want to log something here or do something else
+                        } else {
+                            return res.sendStatus(404); // 404, maybe 500 depending on err
+                        }
+                    }
+                    // Don't need res.end() here since already sent
+                });
+                // res.send("success")
+            })
+            .catch(function (error) {
+                console.log(error)
+            })
+    });
+
     app.get('/builds/:name/:session', (req, res) => {
         const name = req.params.name;
         const session = req.params.session;
