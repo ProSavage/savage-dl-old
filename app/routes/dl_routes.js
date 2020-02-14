@@ -77,7 +77,7 @@ module.exports = function (app, db, client) {
         const session = req.params.session;
 
         if (!sessions.hasOwnProperty(session.toString())) {
-            console.log(sessions.forEach((key, value) => console.log(key, value)));
+            console.log(JSON.stringify(sessions));
             res.send({error: "Invalid Session: " + session});
             return;
         }
