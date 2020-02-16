@@ -23,7 +23,7 @@ module.exports = function (app, db, client) {
         data.append('client_id', process.env.CLIENT_ID);
         data.append('client_secret', process.env.CLIENT_SECRET);
         data.append('grant_type', 'authorization_code');
-        data.append('redirect_uri', 'http://localhost:3000/plugins');
+        data.append('redirect_uri', 'https://dl.savagelabs.net/plugins');
         data.append('scope', 'identify');
         data.append('code', code);
 
