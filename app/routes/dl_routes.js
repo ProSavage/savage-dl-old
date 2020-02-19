@@ -124,13 +124,11 @@ module.exports = function (app, db, client) {
                     const data = Binary(fs.readFileSync(path));
                     var insertData = {buildID};
                     insertData.file_data = data;
-                    buildsCollection.insert(insertData, function (error, result) {
-                    });
+                    buildsCollection.insert(insertData);
                     res.download(path, function (err) {
                         if (err) {
                             // Check if headers have been sent
                             if (res.headersSent) {
-                                // You may want to log something here or do something else
                             } else {
                                 return res.sendStatus(404); // 404, maybe 500 depending on err
                             }
@@ -214,24 +212,25 @@ module.exports = function (app, db, client) {
                         })
                         .then(function (response) {
                             // console.log(response);
-                            response.data.pipe(fs.createWriteStream(path));
-                            const data = Binary(fs.readFileSync(path));
-                            var insertData = {buildID};
-                            insertData.file_data = data;
-                            buildsCollection.insert(insertData, function (error, result) {
-                            });
-                            res.download(path, function (err) {
-                                if (err) {
-                                    // Check if headers have been sent
-                                    if (res.headersSent) {
-                                        // You may want to log something here or do something else
-                                    } else {
-                                        return res.sendStatus(404); // 404, maybe 500 depending on err
+                            response.data.pipe(fs.createWriteStream(path)).on('close', () => {
+                                const data = Binary(fs.readFileSync(path));
+                                var insertData = {buildID};
+                                insertData.file_data = data;
+                                buildsCollection.insert(insertData, function (error, result) {
+                                });
+                                res.download(path, function (err) {
+                                    if (err) {
+                                        // Check if headers have been sent
+                                        if (res.headersSent) {
+                                            // You may want to log something here or do something else
+                                        } else {
+                                            return res.sendStatus(404); // 404, maybe 500 depending on err
+                                        }
                                     }
-                                }
-                                // Don't need res.end() here since already sent
+                                    // Don't need res.end() here since already sent
+                                });
+                                // res.send("success")
                             });
-                            // res.send("success")
                         })
                         .catch(function (error) {
                             console.log(error)
