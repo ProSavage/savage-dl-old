@@ -74,7 +74,7 @@ module.exports = function (app, db, client) {
 
     app.get('/free/:name', (req, res) => {
         const name = req.params.name;
-        if (name !== 'skyblockx' && name !== 'factionsx') {
+        if (name !== 'skyblockx') {
             res.send({message: "nice try retard."});
             return
         }
